@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Funil de Engajamento — PM & PC Paraná</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+<style>
+:root{
+  --bg:#f0f2f5;--card:#fff;
+  --hpm:#1a2744;--hpc:#0f3320;
+  --apm:#2563eb;--apc:#16a34a;
+  --cc:#6366f1;--ct:#f59e0b;--cl:#3b82f6;--cs:#10b981;
+  --txt:#1e293b;--muted:#64748b;--bdr:#e2e8f0;
+  --r:10px;--gap:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);font-size:14px}
+.page{max-width:1440px;margin:0 auto;padding:20px var(--gap)}
+
+.hdr{color:#fff;padding:20px 28px;border-radius:var(--r);margin-bottom:var(--gap);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.hdr.pm{background:var(--hpm)}.hdr.pc{background:var(--hpc)}
+.hdr h1{font-size:20px;font-weight:700}.hdr p{font-size:13px;color:rgba(255,255,255,.6);margin-top:4px}
+.flt{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.fg{display:flex;flex-direction:column;gap:3px}
+.fg label{font-size:11px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px}
+.fg select{padding:7px 12px;border:1px solid rgba(255,255,255,.25);border-radius:6px;background:rgba(255,255,255,.12);color:#fff;font-size:13px;cursor:pointer;min-width:200px}
+.fg select option{background:#1a2744;color:#fff}
+
+.tabs{display:flex;gap:8px;margin-bottom:var(--gap)}
+.tab{padding:10px 24px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;background:var(--card);color:var(--muted);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.tab.opm{background:var(--apm);color:#fff}.tab.opc{background:var(--apc);color:#fff}
+.tab:hover:not(.opm):not(.opc){background:#e8edf5}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap);margin-bottom:var(--gap)}
+.kpi{background:var(--card);border-radius:var(--r);padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,.08);border-left:4px solid var(--bdr)}
+.kpi.k0{border-left-color:var(--cc)}.kpi.k1{border-left-color:var(--ct)}
+.kpi.k2{border-left-color:var(--cl)}.kpi.k3{border-left-color:var(--cs)}
+.ks{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:5px}
+.kv{font-size:34px;font-weight:800;line-height:1;margin-bottom:6px}
+.ki{font-size:12px;color:var(--muted)}.ki b{font-weight:700}
+
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);margin-bottom:var(--gap)}
+.cc{background:var(--card);border-radius:var(--r);padding:20px 22px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.cc.wide{grid-column:1/-1}
+.ct{font-size:13px;font-weight:700;margin-bottom:3px}
+.csb{font-size:12px;color:var(--muted);margin-bottom:14px}
+canvas{max-height:290px}
+
+.tcard{background:var(--card);border-radius:var(--r);padding:20px 22px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:var(--gap);overflow-x:auto}
+.thdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.tsrch{padding:7px 12px;border:1px solid var(--bdr);border-radius:6px;font-size:13px;min-width:220px;outline:none}
+.tsrch:focus{border-color:#94a3b8}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;padding:9px 12px;border-bottom:2px solid var(--bdr);font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;cursor:pointer;white-space:nowrap;user-select:none}
+thead th:hover{color:var(--txt);background:#f8fafc}
+th.r,td.r{text-align:right;font-variant-numeric:tabular-nums}
+tbody td{padding:9px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+tbody tr:hover{background:#f8fafc}
+tbody tr:last-child td{border-bottom:none}
+
+.rbpm{background:#fff}.rbpm td:first-child{font-weight:700}
+.rbpm.has-subs td:first-child{cursor:pointer}
+.rbpm.has-subs td:first-child:hover{color:var(--apm)}
+.rsub{display:none;background:#fafbfc}
+.rsub td{border-bottom:1px solid #f5f7fa!important}
+.rsub td:first-child{padding-left:36px;color:var(--muted);font-size:12px;font-weight:400}
+.rsub td:first-child::before{content:"└ ";color:#cbd5e1}
+.rbpm.open~.rsub{display:table-row}
+.xicon{display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;font-size:10px;color:var(--muted);border:1px solid var(--bdr);border-radius:3px;margin-right:6px;transition:transform .15s;flex-shrink:0}
+.rbpm.open .xicon{transform:rotate(90deg);color:var(--apm);border-color:var(--apm)}
+
+.bdg{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700}
+.bh{background:#dcfce7;color:#15803d}.bm{background:#fef9c3;color:#854d0e}
+.bl{background:#fee2e2;color:#991b1b}.bz{background:#f1f5f9;color:#94a3b8}
+
+.fbar{display:flex;gap:2px;height:16px;align-items:center;min-width:80px}
+.fseg{height:100%;border-radius:2px}
+
+.footer{text-align:center;color:var(--muted);font-size:12px;padding:10px 0 20px}
+
+@media(max-width:900px){
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .cgrid{grid-template-columns:1fr}
+  .cgrid .wide{grid-column:1}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="hdr pm" id="hdr">
+  <div>
+    <h1 id="htitle">🚔 Funil de Engajamento — Polícia Militar · Paraná</h1>
+    <p id="hsub">Plataforma Paladium · a partir de 01/03/2026</p>
+  </div>
+  <div class="flt">
+    <div class="fg">
+      <label>Semana</label>
+      <select id="wsel" onchange="applyFilters()">
+        <option value="ALL">Todas as semanas</option>
+      </select>
+    </div>
+    <div class="fg" id="crpm-fg" style="display:none">
+      <label>CRPM</label>
+      <select id="crsel" onchange="applyFilters()">
+        <option value="ALL">Todos os CRPMs</option>
+        <option value="1º CRPM">1º CRPM</option>
+        <option value="2º CRPM">2º CRPM</option>
+        <option value="3º CRPM">3º CRPM</option>
+        <option value="4º CRPM">4º CRPM</option>
+        <option value="5º CRPM">5º CRPM</option>
+        <option value="6º CRPM">6º CRPM</option>
+        <option value="_OTHER">Outras unidades PM</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab opm" id="tpm" onclick="setOrg('PM')">🫡 Polícia Militar</button>
+  <button class="tab" id="tpc" onclick="setOrg('PC')">🔍 Polícia Civil</button>
+</div>
+
+<div class="kpis">
+  <div class="kpi k0"><div class="ks">① Alertas Criados</div><div class="kv" id="kv0">—</div><div class="ki">Unidades cadastrando monitoramentos</div></div>
+  <div class="kpi k1"><div class="ks">② Alertas Disparados</div><div class="kv" id="kv1">—</div><div class="ki">Detecções únicas por câmera</div></div>
+  <div class="kpi k2"><div class="ks">③ Alertas Encerrados</div><div class="kv" id="kv2">—</div><div class="ki"><b id="kp2">—</b> dos disparados receberam ação</div></div>
+  <div class="kpi k3"><div class="ks">④ Crimes Resolvidos</div><div class="kv" id="kv3">—</div><div class="ki"><b id="kp3">—</b> dos encerrados = resolução PAX</div></div>
+</div>
+
+<div class="cgrid">
+  <div class="cc">
+    <div class="ct">Tendência Semanal — Funil</div>
+    <div class="csb">Evolução dos 4 estágios por semana</div>
+    <canvas id="cht"></canvas>
+  </div>
+  <div class="cc">
+    <div class="ct">Alertas Criados por Batalhão</div>
+    <div class="csb">Ranking por volume de alertas cadastrados</div>
+    <canvas id="chcr"></canvas>
+  </div>
+  <div class="cc">
+    <div class="ct">Top Unidades — Alertas Disparados</div>
+    <div class="csb">Ranking por volume de detecções nas câmeras</div>
+    <canvas id="chtr"></canvas>
+  </div>
+  <div class="cc">
+    <div class="ct">Taxa de Encerramento (%)</div>
+    <div class="csb">Encerrados ÷ Disparados · unidades com ≥ 5 disparos</div>
+    <canvas id="chrt"></canvas>
+  </div>
+  <div class="cc wide">
+    <div class="ct">🏆 Crimes Resolvidos por Unidade</div>
+    <div class="csb">Alertas com resolução PAX confirmada (ALERT_PAX_SOLVED)</div>
+    <canvas id="chsv"></canvas>
+  </div>
+</div>
+
+<div class="tcard">
+  <div class="thdr">
+    <div>
+      <div class="ct">Detalhe por Unidade</div>
+      <div class="csb" style="margin:0">Clique no ▶ para expandir subgrupos · clique no cabeçalho para ordenar</div>
+    </div>
+    <input class="tsrch" id="tsrch" placeholder="Buscar unidade…" oninput="filterTable()">
+  </div>
+  <table>
+    <thead><tr>
+      <th onclick="srt(0)">Unidade <span id="sa0"></span></th>
+      <th class="r" onclick="srt(1)">① Criados <span id="sa1"></span></th>
+      <th class="r" onclick="srt(2)">② Disparados <span id="sa2">▼</span></th>
+      <th class="r" onclick="srt(3)">③ Encerrados <span id="sa3"></span></th>
+      <th class="r" onclick="srt(4)">④ Resolvidos <span id="sa4"></span></th>
+      <th class="r" onclick="srt(5)">% Encerrado <span id="sa5"></span></th>
+      <th class="r" onclick="srt(6)">% Resolvido <span id="sa6"></span></th>
+      <th>Funil</th>
+    </tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<div class="footer">Paladium PAX · Paraná · 01/03/2026 – 15/03/2026 · Gerado em 15/03/2026</div>
+</div>
+
+<script>
+const CRPM_MAP={"1º CRPM": ["12/13/20/23º BPM", "1º CRPM"], "6º CRPM": ["34º BPM", "17º BPM", "22º BPM", "29º BPM", "9º BPM", "6º CRPM"], "2º CRPM": ["5º BPM", "30º BPM", "2º CRPM"], "3º CRPM": ["4º BPM", "32º BPM", "3º CRPM"], "4º CRPM": ["16º BPM", "1º BPM", "4º CRPM"], "5º CRPM": ["14º BPM", "6º BPM", "5º CRPM"]};
+const D={"weeks": [{"value": "2026-03-01", "label": "01/03 – 07/03/2026"}, {"value": "2026-03-08", "label": "08/03 – 14/03/2026"}, {"value": "2026-03-15", "label": "15/03 – 21/03/2026"}], "agg": {"ALL": {"PM": {"29º BPM": {"_total": {"created": 23, "triggered": 212, "closed": 9, "solved": 3}, "_nosub": {"created": 17, "triggered": 123, "closed": 3, "solved": 1}, "Inteligência": {"created": 6, "triggered": 89, "closed": 6, "solved": 2}}, "4º BPM": {"_total": {"created": 58, "triggered": 61, "closed": 11, "solved": 3}, "_nosub": {"created": 23, "triggered": 31, "closed": 6, "solved": 2}, "Inteligência": {"created": 4, "triggered": 3, "closed": 4, "solved": 1}, "CHOQUE": {"created": 1, "triggered": 0, "closed": 0, "solved": 0}, "CPU": {"created": 29, "triggered": 25, "closed": 1, "solved": 0}, "ROCAM": {"created": 1, "triggered": 2, "closed": 0, "solved": 0}}, "5º BPM": {"_total": {"created": 111, "triggered": 562, "closed": 30, "solved": 11}, "_nosub": {"created": 21, "triggered": 79, "closed": 1, "solved": 0}, "inteligência": {"created": 35, "triggered": 131, "closed": 11, "solved": 3}, "ROCAM": {"created": 12, "triggered": 132, "closed": 4, "solved": 2}, "ROTAM": {"created": 31, "triggered": 203, "closed": 14, "solved": 6}, "CHOQUE": {"created": 8, "triggered": 13, "closed": 0, "solved": 0}, "CIAPTRAN": {"created": 4, "triggered": 4, "closed": 0, "solved": 0}}, "12/13/20/23º BPM": {"_total": {"created": 0, "triggered": 155, "closed": 0, "solved": 0}, "_nosub": {"created": 0, "triggered": 155, "closed": 0, "solved": 0}}, "22º BPM": {"_total": {"created": 11, "triggered": 120, "closed": 6, "solved": 2}, "Inteligência": {"created": 5, "triggered": 106, "closed": 2, "solved": 1}, "_nosub": {"created": 6, "triggered": 14, "closed": 4, "solved": 1}}, "CME": {"_total": {"created": 20, "triggered": 95, "closed": 4, "solved": 1}, "Inteligência": {"created": 20, "triggered": 95, "closed": 4, "solved": 1}}, "Operação Verão 2025": {"_total": {"created": 15, "triggered": 159, "closed": 1, "solved": 0}, "Inteligência": {"created": 15, "triggered": 127, "closed": 1, "solved": 0}, "_nosub": {"created": 0, "triggered": 32, "closed": 0, "solved": 0}}, "DTI": {"_total": {"created": 4, "triggered": 25, "closed": 1, "solved": 0}, "_nosub": {"created": 4, "triggered": 25, "closed": 1, "solved": 0}}, "9º BPM": {"_total": {"created": 3, "triggered": 47, "closed": 4, "solved": 4}, "_nosub": {"created": 1, "triggered": 24, "closed": 0, "solved": 0}, "Inteligência": {"created": 2, "triggered": 23, "closed": 4, "solved": 4}}, "BPRONE": {"_total": {"created": 11, "triggered": 135, "closed": 7, "solved": 2}, "Inteligência": {"created": 11, "triggered": 135, "closed": 7, "solved": 2}}, "6º BPM": {"_total": {"created": 46, "triggered": 164, "closed": 20, "solved": 8}, "_nosub": {"created": 20, "triggered": 43, "closed": 8, "solved": 2}, "Inteligência": {"created": 26, "triggered": 121, "closed": 12, "solved": 6}}, "17º BPM": {"_total": {"created": 67, "triggered": 191, "closed": 37, "solved": 7}, "Inteligência": {"created": 8, "triggered": 39, "closed": 9, "solved": 0}, "CIA OP. ROTAM": {"created": 13, "triggered": 107, "closed": 1, "solved": 0}, "1ª CIA": {"created": 14, "triggered": 19, "closed": 8, "solved": 3}, "_nosub": {"created": 6, "triggered": 22, "closed": 4, "solved": 1}, "4ª CIA": {"created": 13, "triggered": 3, "closed": 6, "solved": 2}, "2ª CIA": {"created": 13, "triggered": 1, "closed": 9, "solved": 1}}, "34º BPM": {"_total": {"created": 148, "triggered": 123, "closed": 8, "solved": 1}, "Inteligência": {"created": 1, "triggered": 16, "closed": 0, "solved": 0}, "_nosub": {"created": 147, "triggered": 107, "closed": 8, "solved": 1}}, "BPRV": {"_total": {"created": 26, "triggered": 81, "closed": 1, "solved": 0}, "Inteligência": {"created": 26, "triggered": 81, "closed": 1, "solved": 0}}, "14º BPM": {"_total": {"created": 87, "triggered": 197, "closed": 27, "solved": 6}, "Inteligência": {"created": 57, "triggered": 166, "closed": 19, "solved": 4}, "_nosub": {"created": 30, "triggered": 31, "closed": 8, "solved": 2}}, "30º BPM": {"_total": {"created": 9, "triggered": 20, "closed": 2, "solved": 1}, "_nosub": {"created": 1, "triggered": 1, "closed": 1, "solved": 0}, "Inteligência": {"created": 8, "triggered": 19, "closed": 1, "solved": 1}}, "19º BPM": {"_total": {"created": 0, "triggered": 2, "closed": 0, "solved": 0}, "_nosub": {"created": 0, "triggered": 2, "closed": 0, "solved": 0}}, "PM 2": {"_total": {"created": 0, "triggered": 15, "closed": 0, "solved": 0}, "_nosub": {"created": 0, "triggered": 13, "closed": 0, "solved": 0}, "Análise de rotas": {"created": 0, "triggered": 2, "closed": 0, "solved": 0}}, "BPM ROTAM": {"_total": {"created": 0, "triggered": 15, "closed": 0, "solved": 0}, "_nosub": {"created": 0, "triggered": 15, "closed": 0, "solved": 0}}, "13º BPM": {"_total": {"created": 3, "triggered": 33, "closed": 1, "solved": 0}, "Inteligência": {"created": 3, "triggered": 33, "closed": 1, "solved": 0}}, "1º BPM": {"_total": {"created": 19, "triggered": 77, "closed": 3, "solved": 0}, "Inteligência": {"created": 12, "triggered": 62, "closed": 1, "solved": 0}, "_nosub": {"created": 7, "triggered": 15, "closed": 2, "solved": 0}}, "CHOQUE": {"_total": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}, "_nosub": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}}, "5º CRPM": {"_total": {"created": 2, "triggered": 4, "closed": 0, "solved": 0}, "Inteligência": {"created": 2, "triggered": 4, "closed": 0, "solved": 0}}, "16º BPM": {"_total": {"created": 22, "triggered": 44, "closed": 11, "solved": 2}, "Inteligência": {"created": 7, "triggered": 19, "closed": 1, "solved": 0}, "_nosub": {"created": 15, "triggered": 25, "closed": 10, "solved": 2}}, "DINT": {"_total": {"created": 1, "triggered": 0, "closed": 0, "solved": 0}, "_nosub": {"created": 1, "triggered": 0, "closed": 0, "solved": 0}}, "COC": {"_total": {"created": 0, "triggered": 4, "closed": 0, "solved": 0}, "BPM DIVISAS": {"created": 0, "triggered": 4, "closed": 0, "solved": 0}}, "3º CRPM": {"_total": {"created": 1, "triggered": 0, "closed": 0, "solved": 0}, "Inteligência": {"created": 1, "triggered": 0, "closed": 0, "solved": 0}}, "32º BPM": {"_total": {"created": 3, "triggered": 0, "closed": 1, "solved": 1}, "Inteligência": {"created": 3, "triggered": 0, "closed": 1, "solved": 1}}, "4º CRPM": {"_total": {"created": 4, "triggered": 3, "closed": 0, "solved": 0}, "Inteligência": {"created": 4, "triggered": 3, "closed": 0, "solved": 0}}}, "PC": {"DENARC": {"_total": {"created": 8, "triggered": 69, "closed": 2, "solved": 0}, "DENARC PR - Núcleo Foz do Iguaçu": {"created": 5, "triggered": 27, "closed": 2, "solved": 0}, "DENARC PR - Núcleo Maringá": {"created": 0, "triggered": 14, "closed": 0, "solved": 0}, "DENARC PR - Núcleo Londrina": {"created": 1, "triggered": 16, "closed": 0, "solved": 0}, "DENARC PR - Núcleo Curitiba": {"created": 0, "triggered": 4, "closed": 0, "solved": 0}, "DENARC PR - Núcleo Pato Branco": {"created": 1, "triggered": 4, "closed": 0, "solved": 0}, "DENARC PR - Divisão": {"created": 1, "triggered": 4, "closed": 0, "solved": 0}}, "COPE": {"_total": {"created": 0, "triggered": 13, "closed": 2, "solved": 2}, "_nosub": {"created": 0, "triggered": 13, "closed": 2, "solved": 2}}, "DPMETRO": {"_total": {"created": 3, "triggered": 16, "closed": 1, "solved": 0}, "DP - Fazenda Rio Grande": {"created": 3, "triggered": 16, "closed": 1, "solved": 0}}, "DPI": {"_total": {"created": 19, "triggered": 32, "closed": 2, "solved": 0}, "1ª SDP - Paranaguá": {"created": 1, "triggered": 4, "closed": 0, "solved": 0}, "10ª SDP - Londrina": {"created": 6, "triggered": 13, "closed": 1, "solved": 0}, "6ª SDP - Foz do Iguaçu": {"created": 12, "triggered": 15, "closed": 1, "solved": 0}}, "DHPP": {"_total": {"created": 1, "triggered": 13, "closed": 2, "solved": 2}, "_nosub": {"created": 1, "triggered": 9, "closed": 2, "solved": 2}, "DPP - Delegacia de Proteção à Pessoa": {"created": 0, "triggered": 4, "closed": 0, "solved": 0}}, "DCCP": {"_total": {"created": 18, "triggered": 41, "closed": 0, "solved": 0}, "DFRC": {"created": 13, "triggered": 33, "closed": 0, "solved": 0}, "DFRV": {"created": 5, "triggered": 8, "closed": 0, "solved": 0}}, "DPE": {"_total": {"created": 1, "triggered": 2, "closed": 0, "solved": 0}, "DM - Delegacia da Mulher": {"created": 1, "triggered": 2, "closed": 0, "solved": 0}}, "DPCAP": {"_total": {"created": 1, "triggered": 3, "closed": 1, "solved": 0}, "13º DP": {"created": 1, "triggered": 3, "closed": 1, "solved": 0}}}}, "2026-03-01": {"PM": {"29º BPM": {"_total": {"created": 14, "triggered": 105, "closed": 2, "solved": 0}, "_nosub": {"created": 10, "triggered": 61, "closed": 2, "solved": 0}, "Inteligência": {"created": 4, "triggered": 44, "closed": 0, "solved": 0}}, "4º BPM": {"_total": {"created": 0, "triggered": 10, "closed": 0, "solved": 0}, "_nosub": {"created": 0, "triggered": 10, "closed": 0, "solved": 0}}, "5º BPM": {"_total": {"created": 62, "triggered": 238, "closed": 15, "solved": 5}, "_nosub": {"created": 16, "triggered": 33, "closed": 0, "solved": 0}, "inteligência": {"created": 22, "triggered": 47, "closed": 6, "solved": 1}, "ROCAM": {"created": 10, "triggered": 59, "closed": 3, "solved": 2}, "ROTAM": {"created": 14, "triggered": 99, "closed": 6, "solved": 2}}, "12/13/20/23º BPM": {"_total": {"created": 0, "triggered": 77, "closed": 0, "solved": 0}, "_nosub": {"created": 0, "triggered": 77, "closed": 0, "solved": 0}}, "22º BPM": {"_total": {"created": 3, "triggered": 68, "closed": 2, "solved": 0}, "Inteligência": {"created": 3, "triggered": 61, "closed": 1, "solved": 0}, "_nosub": {"created": 0, "triggered": 7, "closed": 1, "solved": 0}}, "CME": {"_total": {"created": 9, "triggered": 29, "closed": 4, "solved": 1}, "Inteligência": {"created": 9, "triggered": 29, "closed": 4, "solved": 1}}, "Operação Verão 2025": {"_total": {"created": 9, "triggered": 65, "closed": 1, "solved": 0}, "Inteligência": {"created": 9, "triggered": 50, "closed": 1, "solved": 0}, "_nosub": {"created": 0, "triggered": 15, "closed": 0, "solved": 0}}, "DTI": {"_total": {"created": 3, "triggered": 15, "closed": 1, "solved": 0}, "_nosub": {"created": 3, "triggered": 15, "closed": 1, "solved": 0}}, "9º BPM": {"_total": {"created": 1, "triggered": 26, "closed": 1, "solved": 1}, "_nosub": {"created": 0, "triggered": 13, "closed": 0, "solved": 0}, "Inteligência": {"created": 1, "triggered": 13, "closed": 1, "solved": 1}}, "BPRONE": {"_total": {"created": 5, "triggered": 76, "closed": 3, "solved": 0}, "Inteligência": {"created": 5, "triggered": 76, "closed": 3, "solved": 0}}, "6º BPM": {"_total": {"created": 23, "triggered": 79, "closed": 11, "solved": 4}, "_nosub": {"created": 12, "triggered": 26, "closed": 5, "solved": 1}, "Inteligência": {"created": 11, "triggered": 53, "closed": 6, "solved": 3}}, "17º BPM": {"_total": {"created": 33, "triggered": 96, "closed": 18, "solved": 2}, "Inteligência": {"created": 8, "triggered": 24, "closed": 9, "solved": 0}, "CIA OP. ROTAM": {"created": 4, "triggered": 54, "closed": 1, "solved": 0}, "1ª CIA": {"created": 8, "triggered": 9, "closed": 4, "solved": 1}, "_nosub": {"created": 3, "triggered": 8, "closed": 0, "solved": 0}, "4ª CIA": {"created": 9, "triggered": 1, "closed": 3, "solved": 0}, "2ª CIA": {"created": 1, "triggered": 0, "closed": 1, "solved": 1}}, "34º BPM": {"_total": {"created": 64, "triggered": 63, "closed": 3, "solved": 1}, "Inteligência": {"created": 0, "triggered": 7, "closed": 0, "solved": 0}, "_nosub": {"created": 64, "triggered": 56, "closed": 3, "solved": 1}}, "BPRV": {"_total": {"created": 12, "triggered": 25, "closed": 1, "solved": 0}, "Inteligência": {"created": 12, "triggered": 25, "closed": 1, "solved": 0}}, "14º BPM": {"_total": {"created": 31, "triggered": 51, "closed": 8, "solved": 2}, "Inteligência": {"created": 22, "triggered": 43, "closed": 7, "solved": 1}, "_nosub": {"created": 9, "triggered": 8, "closed": 1, "solved": 1}}, "30º BPM": {"_total": {"created": 4, "triggered": 5, "closed": 1, "solved": 0}, "_nosub": {"created": 1, "triggered": 1, "closed": 1, "solved": 0}, "Inteligência": {"created": 3, "triggered": 4, "closed": 0, "solved": 0}}, "19º BPM": {"_total": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}, "_nosub": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}}, "PM 2": {"_total": {"created": 0, "triggered": 8, "closed": 0, "solved": 0}, "_nosub": {"created": 0, "triggered": 7, "closed": 0, "solved": 0}, "Análise de rotas": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}}, "BPM ROTAM": {"_total": {"created": 0, "triggered": 7, "closed": 0, "solved": 0}, "_nosub": {"created": 0, "triggered": 7, "closed": 0, "solved": 0}}, "13º BPM": {"_total": {"created": 1, "triggered": 12, "closed": 0, "solved": 0}, "Inteligência": {"created": 1, "triggered": 12, "closed": 0, "solved": 0}}, "1º BPM": {"_total": {"created": 12, "triggered": 36, "closed": 2, "solved": 0}, "Inteligência": {"created": 9, "triggered": 25, "closed": 0, "solved": 0}, "_nosub": {"created": 3, "triggered": 11, "closed": 2, "solved": 0}}, "CHOQUE": {"_total": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}, "_nosub": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}}, "5º CRPM": {"_total": {"created": 2, "triggered": 1, "closed": 0, "solved": 0}, "Inteligência": {"created": 2, "triggered": 1, "closed": 0, "solved": 0}}, "16º BPM": {"_total": {"created": 6, "triggered": 11, "closed": 0, "solved": 0}, "Inteligência": {"created": 2, "triggered": 5, "closed": 0, "solved": 0}, "_nosub": {"created": 4, "triggered": 6, "closed": 0, "solved": 0}}}, "PC": {"DENARC": {"_total": {"created": 4, "triggered": 35, "closed": 2, "solved": 0}, "DENARC PR - Núcleo Foz do Iguaçu": {"created": 4, "triggered": 14, "closed": 2, "solved": 0}, "DENARC PR - Núcleo Maringá": {"created": 0, "triggered": 11, "closed": 0, "solved": 0}, "DENARC PR - Núcleo Londrina": {"created": 0, "triggered": 8, "closed": 0, "solved": 0}, "DENARC PR - Núcleo Curitiba": {"created": 0, "triggered": 2, "closed": 0, "solved": 0}}, "COPE": {"_total": {"created": 0, "triggered": 9, "closed": 2, "solved": 2}, "_nosub": {"created": 0, "triggered": 9, "closed": 2, "solved": 2}}, "DPMETRO": {"_total": {"created": 1, "triggered": 9, "closed": 0, "solved": 0}, "DP - Fazenda Rio Grande": {"created": 1, "triggered": 9, "closed": 0, "solved": 0}}, "DPI": {"_total": {"created": 0, "triggered": 2, "closed": 0, "solved": 0}, "1ª SDP - Paranaguá": {"created": 0, "triggered": 2, "closed": 0, "solved": 0}}, "DHPP": {"_total": {"created": 0, "triggered": 8, "closed": 0, "solved": 0}, "_nosub": {"created": 0, "triggered": 6, "closed": 0, "solved": 0}, "DPP - Delegacia de Proteção à Pessoa": {"created": 0, "triggered": 2, "closed": 0, "solved": 0}}, "DCCP": {"_total": {"created": 7, "triggered": 7, "closed": 0, "solved": 0}, "DFRC": {"created": 2, "triggered": 5, "closed": 0, "solved": 0}, "DFRV": {"created": 5, "triggered": 2, "closed": 0, "solved": 0}}}}, "2026-03-08": {"PM": {"16º BPM": {"_total": {"created": 16, "triggered": 33, "closed": 11, "solved": 2}, "_nosub": {"created": 11, "triggered": 19, "closed": 10, "solved": 2}, "Inteligência": {"created": 5, "triggered": 14, "closed": 1, "solved": 0}}, "22º BPM": {"_total": {"created": 8, "triggered": 52, "closed": 4, "solved": 2}, "Inteligência": {"created": 2, "triggered": 45, "closed": 1, "solved": 1}, "_nosub": {"created": 6, "triggered": 7, "closed": 3, "solved": 1}}, "29º BPM": {"_total": {"created": 9, "triggered": 105, "closed": 7, "solved": 3}, "_nosub": {"created": 7, "triggered": 62, "closed": 1, "solved": 1}, "Inteligência": {"created": 2, "triggered": 43, "closed": 6, "solved": 2}}, "5º BPM": {"_total": {"created": 48, "triggered": 318, "closed": 14, "solved": 5}, "ROCAM": {"created": 2, "triggered": 72, "closed": 1, "solved": 0}, "inteligência": {"created": 13, "triggered": 84, "closed": 5, "solved": 2}, "ROTAM": {"created": 17, "triggered": 102, "closed": 7, "solved": 3}, "_nosub": {"created": 5, "triggered": 45, "closed": 1, "solved": 0}, "CHOQUE": {"created": 8, "triggered": 11, "closed": 0, "solved": 0}, "CIAPTRAN": {"created": 3, "triggered": 4, "closed": 0, "solved": 0}}, "9º BPM": {"_total": {"created": 2, "triggered": 20, "closed": 3, "solved": 3}, "_nosub": {"created": 1, "triggered": 11, "closed": 0, "solved": 0}, "Inteligência": {"created": 1, "triggered": 9, "closed": 3, "solved": 3}}, "Operação Verão 2025": {"_total": {"created": 6, "triggered": 94, "closed": 0, "solved": 0}, "_nosub": {"created": 0, "triggered": 17, "closed": 0, "solved": 0}, "Inteligência": {"created": 6, "triggered": 77, "closed": 0, "solved": 0}}, "6º BPM": {"_total": {"created": 22, "triggered": 85, "closed": 8, "solved": 4}, "Inteligência": {"created": 15, "triggered": 68, "closed": 5, "solved": 3}, "_nosub": {"created": 7, "triggered": 17, "closed": 3, "solved": 1}}, "34º BPM": {"_total": {"created": 84, "triggered": 60, "closed": 5, "solved": 0}, "_nosub": {"created": 83, "triggered": 51, "closed": 5, "solved": 0}, "Inteligência": {"created": 1, "triggered": 9, "closed": 0, "solved": 0}}, "14º BPM": {"_total": {"created": 56, "triggered": 144, "closed": 19, "solved": 4}, "_nosub": {"created": 21, "triggered": 23, "closed": 7, "solved": 1}, "Inteligência": {"created": 35, "triggered": 121, "closed": 12, "solved": 3}}, "17º BPM": {"_total": {"created": 34, "triggered": 93, "closed": 19, "solved": 5}, "CIA OP. ROTAM": {"created": 9, "triggered": 51, "closed": 0, "solved": 0}, "Inteligência": {"created": 0, "triggered": 15, "closed": 0, "solved": 0}, "_nosub": {"created": 3, "triggered": 14, "closed": 4, "solved": 1}, "1ª CIA": {"created": 6, "triggered": 10, "closed": 4, "solved": 2}, "2ª CIA": {"created": 12, "triggered": 1, "closed": 8, "solved": 0}, "4ª CIA": {"created": 4, "triggered": 2, "closed": 3, "solved": 2}}, "1º BPM": {"_total": {"created": 7, "triggered": 41, "closed": 1, "solved": 0}, "_nosub": {"created": 4, "triggered": 4, "closed": 0, "solved": 0}, "Inteligência": {"created": 3, "triggered": 37, "closed": 1, "solved": 0}}, "5º CRPM": {"_total": {"created": 0, "triggered": 3, "closed": 0, "solved": 0}, "Inteligência": {"created": 0, "triggered": 3, "closed": 0, "solved": 0}}, "BPRONE": {"_total": {"created": 6, "triggered": 59, "closed": 4, "solved": 2}, "Inteligência": {"created": 6, "triggered": 59, "closed": 4, "solved": 2}}, "13º BPM": {"_total": {"created": 2, "triggered": 21, "closed": 1, "solved": 0}, "Inteligência": {"created": 2, "triggered": 21, "closed": 1, "solved": 0}}, "CME": {"_total": {"created": 11, "triggered": 65, "closed": 0, "solved": 0}, "Inteligência": {"created": 11, "triggered": 65, "closed": 0, "solved": 0}}, "BPRV": {"_total": {"created": 14, "triggered": 55, "closed": 0, "solved": 0}, "Inteligência": {"created": 14, "triggered": 55, "closed": 0, "solved": 0}}, "12/13/20/23º BPM": {"_total": {"created": 0, "triggered": 78, "closed": 0, "solved": 0}, "_nosub": {"created": 0, "triggered": 78, "closed": 0, "solved": 0}}, "PM 2": {"_total": {"created": 0, "triggered": 7, "closed": 0, "solved": 0}, "_nosub": {"created": 0, "triggered": 6, "closed": 0, "solved": 0}, "Análise de rotas": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}}, "BPM ROTAM": {"_total": {"created": 0, "triggered": 7, "closed": 0, "solved": 0}, "_nosub": {"created": 0, "triggered": 7, "closed": 0, "solved": 0}}, "30º BPM": {"_total": {"created": 5, "triggered": 14, "closed": 1, "solved": 1}, "Inteligência": {"created": 5, "triggered": 14, "closed": 1, "solved": 1}}, "4º BPM": {"_total": {"created": 58, "triggered": 51, "closed": 11, "solved": 3}, "_nosub": {"created": 23, "triggered": 21, "closed": 6, "solved": 2}, "Inteligência": {"created": 4, "triggered": 3, "closed": 4, "solved": 1}, "CHOQUE": {"created": 1, "triggered": 0, "closed": 0, "solved": 0}, "CPU": {"created": 29, "triggered": 25, "closed": 1, "solved": 0}, "ROCAM": {"created": 1, "triggered": 2, "closed": 0, "solved": 0}}, "DTI": {"_total": {"created": 1, "triggered": 10, "closed": 0, "solved": 0}, "_nosub": {"created": 1, "triggered": 10, "closed": 0, "solved": 0}}, "DINT": {"_total": {"created": 1, "triggered": 0, "closed": 0, "solved": 0}, "_nosub": {"created": 1, "triggered": 0, "closed": 0, "solved": 0}}, "COC": {"_total": {"created": 0, "triggered": 4, "closed": 0, "solved": 0}, "BPM DIVISAS": {"created": 0, "triggered": 4, "closed": 0, "solved": 0}}, "3º CRPM": {"_total": {"created": 1, "triggered": 0, "closed": 0, "solved": 0}, "Inteligência": {"created": 1, "triggered": 0, "closed": 0, "solved": 0}}, "19º BPM": {"_total": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}, "_nosub": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}}, "32º BPM": {"_total": {"created": 3, "triggered": 0, "closed": 1, "solved": 1}, "Inteligência": {"created": 3, "triggered": 0, "closed": 1, "solved": 1}}, "4º CRPM": {"_total": {"created": 4, "triggered": 3, "closed": 0, "solved": 0}, "Inteligência": {"created": 4, "triggered": 3, "closed": 0, "solved": 0}}}, "PC": {"DENARC": {"_total": {"created": 4, "triggered": 34, "closed": 0, "solved": 0}, "DENARC PR - Núcleo Maringá": {"created": 0, "triggered": 3, "closed": 0, "solved": 0}, "DENARC PR - Núcleo Londrina": {"created": 1, "triggered": 8, "closed": 0, "solved": 0}, "DENARC PR - Núcleo Foz do Iguaçu": {"created": 1, "triggered": 13, "closed": 0, "solved": 0}, "DENARC PR - Núcleo Curitiba": {"created": 0, "triggered": 2, "closed": 0, "solved": 0}, "DENARC PR - Núcleo Pato Branco": {"created": 1, "triggered": 4, "closed": 0, "solved": 0}, "DENARC PR - Divisão": {"created": 1, "triggered": 4, "closed": 0, "solved": 0}}, "DPMETRO": {"_total": {"created": 2, "triggered": 7, "closed": 1, "solved": 0}, "DP - Fazenda Rio Grande": {"created": 2, "triggered": 7, "closed": 1, "solved": 0}}, "DHPP": {"_total": {"created": 1, "triggered": 5, "closed": 2, "solved": 2}, "_nosub": {"created": 1, "triggered": 3, "closed": 2, "solved": 2}, "DPP - Delegacia de Proteção à Pessoa": {"created": 0, "triggered": 2, "closed": 0, "solved": 0}}, "DCCP": {"_total": {"created": 11, "triggered": 32, "closed": 0, "solved": 0}, "DFRC": {"created": 11, "triggered": 27, "closed": 0, "solved": 0}, "DFRV": {"created": 0, "triggered": 5, "closed": 0, "solved": 0}}, "COPE": {"_total": {"created": 0, "triggered": 4, "closed": 0, "solved": 0}, "_nosub": {"created": 0, "triggered": 4, "closed": 0, "solved": 0}}, "DPI": {"_total": {"created": 19, "triggered": 30, "closed": 2, "solved": 0}, "1ª SDP - Paranaguá": {"created": 1, "triggered": 2, "closed": 0, "solved": 0}, "10ª SDP - Londrina": {"created": 6, "triggered": 13, "closed": 1, "solved": 0}, "6ª SDP - Foz do Iguaçu": {"created": 12, "triggered": 15, "closed": 1, "solved": 0}}, "DPE": {"_total": {"created": 1, "triggered": 2, "closed": 0, "solved": 0}, "DM - Delegacia da Mulher": {"created": 1, "triggered": 2, "closed": 0, "solved": 0}}, "DPCAP": {"_total": {"created": 1, "triggered": 2, "closed": 1, "solved": 0}, "13º DP": {"created": 1, "triggered": 2, "closed": 1, "solved": 0}}}}, "2026-03-15": {"PM": {"5º BPM": {"_total": {"created": 1, "triggered": 6, "closed": 1, "solved": 1}, "ROTAM": {"created": 0, "triggered": 2, "closed": 1, "solved": 1}, "CHOQUE": {"created": 0, "triggered": 2, "closed": 0, "solved": 0}, "_nosub": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}, "ROCAM": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}, "CIAPTRAN": {"created": 1, "triggered": 0, "closed": 0, "solved": 0}}, "9º BPM": {"_total": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}, "Inteligência": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}}, "BPRV": {"_total": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}, "Inteligência": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}}, "17º BPM": {"_total": {"created": 0, "triggered": 2, "closed": 0, "solved": 0}, "CIA OP. ROTAM": {"created": 0, "triggered": 2, "closed": 0, "solved": 0}}, "CME": {"_total": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}, "Inteligência": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}}, "29º BPM": {"_total": {"created": 0, "triggered": 2, "closed": 0, "solved": 0}, "Inteligência": {"created": 0, "triggered": 2, "closed": 0, "solved": 0}}, "30º BPM": {"_total": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}, "Inteligência": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}}, "14º BPM": {"_total": {"created": 0, "triggered": 2, "closed": 0, "solved": 0}, "Inteligência": {"created": 0, "triggered": 2, "closed": 0, "solved": 0}}, "BPM ROTAM": {"_total": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}, "_nosub": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}}, "6º BPM": {"_total": {"created": 1, "triggered": 0, "closed": 1, "solved": 0}, "_nosub": {"created": 1, "triggered": 0, "closed": 0, "solved": 0}, "Inteligência": {"created": 0, "triggered": 0, "closed": 1, "solved": 0}}}, "PC": {"DCCP": {"_total": {"created": 0, "triggered": 2, "closed": 0, "solved": 0}, "DFRC": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}, "DFRV": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}}, "DPCAP": {"_total": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}, "13º DP": {"created": 0, "triggered": 1, "closed": 0, "solved": 0}}}}}, "trend": {"PM": [{"week": "2026-03-01", "label": "01/03 – 07/03/2026", "created": 294, "triggered": 1105, "closed": 73, "solved": 16}, {"week": "2026-03-08", "label": "08/03 – 14/03/2026", "created": 398, "triggered": 1423, "closed": 109, "solved": 35}, {"week": "2026-03-15", "label": "15/03 – 21/03/2026", "created": 2, "triggered": 17, "closed": 2, "solved": 1}], "PC": [{"week": "2026-03-01", "label": "01/03 – 07/03/2026", "created": 12, "triggered": 70, "closed": 4, "solved": 2}, {"week": "2026-03-08", "label": "08/03 – 14/03/2026", "created": 39, "triggered": 116, "closed": 6, "solved": 2}, {"week": "2026-03-15", "label": "15/03 – 21/03/2026", "created": 0, "triggered": 3, "closed": 0, "solved": 0}]}};
+let org='PM',week='ALL',crpm='ALL',scol=2,sdir='desc';
+const CH={};
+
+// Populate week selector
+const ws=document.getElementById('wsel');
+D.weeks.forEach(w=>{const o=document.createElement('option');o.value=w.value;o.textContent='Sem. '+w.label;ws.appendChild(o);});
+
+function setOrg(o){
+  org=o;
+  document.getElementById('tpm').className='tab'+(o==='PM'?' opm':'');
+  document.getElementById('tpc').className='tab'+(o==='PC'?' opc':'');
+  document.getElementById('hdr').className='hdr '+(o==='PM'?'pm':'pc');
+  document.getElementById('htitle').textContent=o==='PM'
+    ?'🚔 Funil de Engajamento — Polícia Militar · Paraná'
+    :'🔍 Funil de Engajamento — Polícia Civil · Paraná';
+  // Show CRPM filter only for PM
+  document.getElementById('crpm-fg').style.display = o==='PM' ? 'flex' : 'none';
+  if(o==='PC'){crpm='ALL'; document.getElementById('crsel').value='ALL';}
+  render();
+}
+function applyFilters(){
+  week=document.getElementById('wsel').value;
+  crpm=document.getElementById('crsel')?document.getElementById('crsel').value:'ALL';
+  render();
+}
+
+function scope(){
+  const raw=(D.agg[week]||D.agg['ALL'])[org]||{};
+  if(org!=='PM'||crpm==='ALL') return raw;
+  if(crpm==='_OTHER'){
+    const crpmBpms=Object.values(CRPM_MAP).flat();
+    return Object.fromEntries(Object.entries(raw).filter(([b])=>!crpmBpms.includes(b)));
+  }
+  const allowed=CRPM_MAP[crpm]||[];
+  return Object.fromEntries(Object.entries(raw).filter(([b])=>allowed.includes(b)));
+}
+
+function totals(s){
+  let c=0,t=0,cl=0,sv=0;
+  Object.values(s).forEach(subs=>{const x=subs._total||{};c+=x.created||0;t+=x.triggered||0;cl+=x.closed||0;sv+=x.solved||0;});
+  return{created:c,triggered:t,closed:cl,solved:sv};
+}
+function pct(a,b){return b?Math.round(a/b*100):0;}
+function fmt(n){return n>=1000?(n/1000).toFixed(1)+'k':n.toLocaleString('pt-BR');}
+function bdg(p,has){
+  if(!has)return'<span class="bdg bz">—</span>';
+  return`<span class="bdg ${p>=20?'bh':p>=5?'bm':p>0?'bl':'bz'}">${p}%</span>`;
+}
+
+function render(){
+  const s=scope(); const t=totals(s);
+  // Update subtitle with active CRPM filter
+  const subEl=document.getElementById('hdr-sub');
+  if(subEl){
+    const crpmLabel = (org==='PM' && crpm!=='ALL') ? ` · Filtro: ${crpm==='_OTHER'?'Outras unidades':crpm}` : '';
+    const weekLabel2 = week!=='ALL' ? ` · Sem. ${D.weeks.find(w=>w.value===week)?.label||''}` : '';
+    subEl.textContent = 'Plataforma Paladium · a partir de 01/03/2026' + crpmLabel + weekLabel2;
+  }
+  document.getElementById('kv0').textContent=fmt(t.created);
+  document.getElementById('kv1').textContent=fmt(t.triggered);
+  document.getElementById('kv2').textContent=fmt(t.closed);
+  document.getElementById('kv3').textContent=fmt(t.solved);
+  document.getElementById('kp2').textContent=t.triggered?pct(t.closed,t.triggered)+'%':'—';
+  document.getElementById('kp3').textContent=t.closed?pct(t.solved,t.closed)+'%':'—';
+  renderTrend();renderBars(s);renderTable(s);
+}
+
+function renderTrend(){
+  // For CRPM filter, recompute trend from scope per week
+  let td;
+  if(org==='PM' && crpm!=='ALL'){
+    td = D.weeks.map(w=>{
+      const s=(D.agg[w.value]||{})[org]||{};
+      let filtered;
+      if(crpm==='_OTHER'){
+        const crpmBpms=Object.values(CRPM_MAP).flat();
+        filtered=Object.fromEntries(Object.entries(s).filter(([b])=>!crpmBpms.includes(b)));
+      } else {
+        const allowed=CRPM_MAP[crpm]||[];
+        filtered=Object.fromEntries(Object.entries(s).filter(([b])=>allowed.includes(b)));
+      }
+      const t=totals(filtered);
+      return{week:w.value,label:w.label,...t};
+    }).filter(d=>week==='ALL'||d.week===week);
+  } else {
+    td=week==='ALL'?D.trend[org]:D.trend[org].filter(d=>d.week===week);
+  }
+  const lbs=td.map(d=>d.label);
+  const dss=[
+    {label:'Criados',key:'created',color:'#6366f1'},
+    {label:'Disparados',key:'triggered',color:'#f59e0b'},
+    {label:'Encerrados',key:'closed',color:'#3b82f6'},
+    {label:'Resolvidos',key:'solved',color:'#10b981'},
+  ].map(d=>({label:d.label,data:td.map(r=>r[d.key]),borderColor:d.color,backgroundColor:d.color+'18',borderWidth:2,fill:false,tension:0.3,pointRadius:4,pointHoverRadius:6}));
+  if(CH.t){CH.t.data.labels=lbs;CH.t.data.datasets.forEach((s,i)=>{s.data=dss[i].data;});CH.t.update('none');}
+  else{CH.t=new Chart(document.getElementById('cht').getContext('2d'),{type:'line',data:{labels:lbs,datasets:dss},options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:12,font:{size:11}}}},scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{beginAtZero:true,ticks:{font:{size:11}}}}}});}
+}
+
+function mkBar(id,key,labels,vals,color,isPct){
+  const lbl=labels.map(l=>l.length>26?l.slice(0,24)+'…':l);
+  const colors=Array.isArray(color)?color:lbl.map(()=>color+'cc');
+  const borderColors=Array.isArray(color)?color.map(c=>c):lbl.map(()=>color);
+  if(CH[key]){CH[key].data.labels=lbl;CH[key].data.datasets[0].data=vals;CH[key].data.datasets[0].backgroundColor=colors;CH[key].update('none');}
+  else{CH[key]=new Chart(document.getElementById(id).getContext('2d'),{type:'bar',data:{labels:lbl,datasets:[{label:key,data:vals,backgroundColor:colors,borderColor:borderColors,borderWidth:Array.isArray(color)?0:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,animation:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.x+(isPct?'%':'')}}},schools:{x:{beginAtZero:true}},scales:{x:{beginAtZero:true,max:isPct?100:undefined,ticks:{callback:v=>v+(isPct?'%':''),font:{size:11}},grid:{color:'#f1f5f9'}},y:{ticks:{font:{size:11}}}}}});}
+}
+
+function renderBars(s){
+  const entries=Object.entries(s).map(([bpm,subs])=>{
+    const t=subs._total||{};
+    return{bpm,created:t.created||0,triggered:t.triggered||0,closed:t.closed||0,solved:t.solved||0};
+  });
+
+  // Created
+  const topCr=[...entries].sort((a,b)=>b.created-a.created).filter(e=>e.created>0).slice(0,14);
+  mkBar('chcr','cr',topCr.map(e=>e.bpm),topCr.map(e=>e.created),'#6366f1',false);
+
+  // Triggered
+  const topTr=[...entries].sort((a,b)=>b.triggered-a.triggered).slice(0,14);
+  mkBar('chtr','tr',topTr.map(e=>e.bpm),topTr.map(e=>e.triggered),'#f59e0b',false);
+
+  // Closure rate
+  const wr=entries.filter(e=>e.triggered>=5).map(e=>({bpm:e.bpm,rate:pct(e.closed,e.triggered)})).sort((a,b)=>b.rate-a.rate).slice(0,12);
+  mkBar('chrt','rt',wr.map(e=>e.bpm),wr.map(e=>e.rate),wr.map(e=>e.rate>=20?'#10b981':e.rate>=5?'#f59e0b':'#ef4444'),true);
+
+  // Solved — horizontal, full width
+  const topSv=[...entries].sort((a,b)=>b.solved-a.solved).filter(e=>e.solved>0).slice(0,16);
+  mkBar('chsv','sv',topSv.map(e=>e.bpm),topSv.map(e=>e.solved),'#10b981',false);
+}
+
+// TABLE
+let tdata=[], srchVal='';
+function renderTable(s){
+  tdata=Object.entries(s).map(([bpm,subs])=>{
+    const t=subs._total||{};
+    const subList=Object.entries(subs).filter(([k])=>k!=='_total')
+      .map(([sg,c])=>({sg,created:c.created||0,triggered:c.triggered||0,closed:c.closed||0,solved:c.solved||0}))
+      .filter(s=>s.created||s.triggered||s.closed||s.solved)
+      .sort((a,b)=>{
+        // _nosub always last
+        if(a.sg==='_nosub') return 1; if(b.sg==='_nosub') return -1;
+        return (b.triggered||0)-(a.triggered||0);
+      });
+    return{bpm,created:t.created||0,triggered:t.triggered||0,closed:t.closed||0,solved:t.solved||0,subs:subList};
+  });
+  scol=2;sdir='desc';updArrows();applySort();
+}
+function filterTable(){srchVal=document.getElementById('tsrch').value.toLowerCase();buildHTML();}
+function applySort(){
+  const keys=['bpm','created','triggered','closed','solved','pctClosed','pctSolved'];
+  const k=keys[scol];
+  tdata.sort((a,b)=>{
+    let va=k==='pctClosed'?pct(a.closed,a.triggered):k==='pctSolved'?pct(a.solved,a.closed):a[k];
+    let vb=k==='pctClosed'?pct(b.closed,b.triggered):k==='pctSolved'?pct(b.solved,b.closed):b[k];
+    if(typeof va==='string'){va=va.toLowerCase();vb=vb.toLowerCase();}
+    if(va<vb)return sdir==='asc'?-1:1;if(va>vb)return sdir==='asc'?1:-1;return 0;
+  });
+  buildHTML();
+}
+function buildHTML(){
+  const mx=Math.max(...tdata.map(r=>r.triggered),1);
+  const rows=tdata.filter(r=>!srchVal||r.bpm.toLowerCase().includes(srchVal)||r.subs.some(s=>s.sg.toLowerCase().includes(srchVal)));
+  let html='';
+  rows.forEach((r,i)=>{
+    const pc1=pct(r.closed,r.triggered),pc2=pct(r.solved,r.closed);
+    const id='b'+i, hs=r.subs.length>0;
+    const fbar=`<div class="fbar">
+      <div class="fseg" style="width:${Math.max(r.triggered/mx*100,3)}px;background:#f59e0b" title="Disp:${r.triggered}"></div>
+      <div class="fseg" style="width:${Math.max(r.closed/mx*100,r.closed?2:0)}px;background:#3b82f6" title="Enc:${r.closed}"></div>
+      <div class="fseg" style="width:${Math.max(r.solved/mx*100,r.solved?2:0)}px;background:#10b981" title="Res:${r.solved}"></div>
+    </div>`;
+    const nm=hs?`<span class="xicon">▶</span>${r.bpm}`:r.bpm;
+    html+=`<tr class="rbpm${hs?' has-subs':''}" id="${id}"${hs?` onclick="toggle('${id}')"`:''}><td>${nm}</td><td class="r">${r.created||'—'}</td><td class="r"><b>${r.triggered||'—'}</b></td><td class="r">${r.closed||'—'}</td><td class="r">${r.solved||'—'}</td><td class="r">${bdg(pc1,r.triggered>0)}</td><td class="r">${bdg(pc2,r.closed>0)}</td><td>${fbar}</td></tr>`;
+    r.subs.forEach(s=>{
+      if(!s.created && !s.triggered && !s.closed && !s.solved) return;
+      const sgLabel = s.sg === '_nosub' ? '<em style="color:#94a3b8">Geral</em>' : s.sg;
+      const sp1=pct(s.closed,s.triggered),sp2=pct(s.solved,s.closed);
+      const sfb=`<div class="fbar"><div class="fseg" style="width:${Math.max(s.triggered/mx*100,s.triggered?3:0)}px;background:#f59e0baa"></div><div class="fseg" style="width:${Math.max(s.closed/mx*100,s.closed?2:0)}px;background:#3b82f6aa"></div><div class="fseg" style="width:${Math.max(s.solved/mx*100,s.solved?2:0)}px;background:#10b981aa"></div></div>`;
+      html+=`<tr class="rsub" data-p="${id}"><td>${sgLabel}</td><td class="r">${s.created||'—'}</td><td class="r">${s.triggered||'—'}</td><td class="r">${s.closed||'—'}</td><td class="r">${s.solved||'—'}</td><td class="r">${bdg(sp1,s.triggered>0)}</td><td class="r">${bdg(sp2,s.closed>0)}</td><td>${sfb}</td></tr>`;
+    });
+  });
+  document.getElementById('tbody').innerHTML=html;
+}
+function toggle(id){
+  const el=document.getElementById(id);
+  el.classList.toggle('open');
+  document.querySelectorAll(`[data-p="${id}"]`).forEach(s=>{s.style.display=el.classList.contains('open')?'table-row':'none';});
+}
+function srt(col){
+  if(scol===col)sdir=sdir==='asc'?'desc':'asc';else{scol=col;sdir='desc';}
+  updArrows();applySort();
+}
+function updArrows(){
+  for(let i=0;i<7;i++){const el=document.getElementById('sa'+i);if(el)el.textContent=i===scol?(sdir==='asc'?'▲':'▼'):'';}
+}
+render();
+</script>
+</body>
+</html>
